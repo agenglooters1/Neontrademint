@@ -1,4 +1,4 @@
-
+import { createOrGetUser } from './services/userService';
 import React, { useState } from 'react';
 import Layout from './components/Layout';
 import Auth from './pages/Auth';
@@ -19,8 +19,9 @@ import { Coin, Transaction, TransactionStatus } from './types';
 const ADMIN_CREDS = { user: 'chinasystem', pass: 'jingping@12koplar#12' };
 
 const App: React.FC = () => {
-  const store = useDemoStore();
+  const store = useDemoStore(); 
   const [activeTab, setActiveTab] = useState('home');
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [selectedCoin, setSelectedCoin] = useState<Coin | null>(null);
   const [subPage, setSubPage] = useState<string | null>(null);
   const [isAdminPortal, setIsAdminPortal] = useState(false);
@@ -40,6 +41,18 @@ const App: React.FC = () => {
     setSubPage(null);
   };
 
+  const handleUserLogin = async (phone: string) => {
+  try {
+    const user = await createOrGetUser(phone);
+    setCurrentUser(user);
+    store.setUser(user); // VERY IMPORTANT
+    setActiveTab('home');
+  } catch (err) {
+    console.error(err);
+    alert('User login failed');
+  }
+};
+
   if (isAdminPortal && !isAdminLoggedIn) {
     return <AdminAuth onAdminLogin={handleAdminLogin} onBack={() => setIsAdminPortal(false)} />;
   }
@@ -47,8 +60,7 @@ const App: React.FC = () => {
   if (!store.user && !isAdminLoggedIn) {
     return (
       <Auth 
-        onLogin={store.login} 
-        onRegister={store.register} 
+        onLogin={handleUserLogin}
         onAdminAccess={() => setIsAdminPortal(true)} 
       />
     );
