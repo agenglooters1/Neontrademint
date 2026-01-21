@@ -1,8 +1,16 @@
 import { supabase } from './supabase';
 
-export async function createOrGetUser(phone: string) {
-  // check user exists
-  const { data: existingUser } = await supabase
+export interface AppUser {
+  id: number;
+  phone: string;
+  role: 'user' | 'admin';
+  is_active: boolean;
+  created_at: string;
+}
+
+export async function createOrGetUser(phone: string): Promise<AppUser> {
+  // 1️⃣ Check if user already exists
+  const { data: existingUser, error: fetchError } = await supabase
     .from('users')
     .select('*')
     .eq('phone', phone)
@@ -12,8 +20,8 @@ export async function createOrGetUser(phone: string) {
     return existingUser;
   }
 
-  // create new user
-  const { data: newUser, error } = await supabase
+  // 2️⃣ If not exists → create new user
+  const { data: newUser, error: insertError } = await supabase
     .from('users')
     .insert([
       {
@@ -25,6 +33,9 @@ export async function createOrGetUser(phone: string) {
     .select()
     .single();
 
-  if (error) throw error;
+  if (insertError) {
+    throw insertError;
+  }
+
   return newUser;
 }
